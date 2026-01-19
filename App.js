@@ -1,20 +1,31 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useContext } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-export default function App() {
+import { AuthProvider, AuthContext } from "./src/context/AuthContext";
+
+import LoginScreen from "./src/screens/LoginScreen";
+import MenuScreen from "./src/screens/MenuScreen";
+import GestionResiduosCloro from "./src/screens/GestionResiduosCloro";
+
+
+const Stack = createNativeStackNavigator();
+
+function AppNavigator() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Menu" component={MenuScreen} />
+      <Stack.Screen name="GestionResiduosCloro" component={GestionResiduosCloro} />
+    </Stack.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  return (
+    <AuthProvider>
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
+    </AuthProvider>
+  );
+}
