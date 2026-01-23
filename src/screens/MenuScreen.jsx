@@ -33,8 +33,8 @@ export default function MenuScreen({ navigation }) {
 
       {/*limpieza y desinfeccion */}
       <TouchableOpacity
-        style={styles.card}
-        onPress={() => navigation.navigate("GestionResiduosCloro")}
+        style={styles.card} 
+        onPress={() => navigation.navigate("LimpiezaDesinfeccionForm")}
       >
         <Text style={styles.cardTitle}>
           {" "}
@@ -46,7 +46,7 @@ export default function MenuScreen({ navigation }) {
       {/*REGISTRO INGRESO DE MATERIAS PRIMAS */}
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate("GestionResiduosCloro")}
+        onPress={() => navigation.navigate("")}
       >
         <Text style={styles.cardTitle}>
           {" "}
@@ -58,7 +58,7 @@ export default function MenuScreen({ navigation }) {
       {/*Registro Control Químico de Plagas */}
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate("GestionResiduosCloro")}
+        onPress={() => navigation.navigate("")}
       >
         <Text style={styles.cardTitle}>
           {" "}
@@ -70,7 +70,7 @@ export default function MenuScreen({ navigation }) {
       {/*REGISTRO CONTROL MUESTRAS DE ALIMENTOS */}
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate("GestionResiduosCloro")}
+        onPress={() => navigation.navigate("")}
       >
         <Text style={styles.cardTitle}>
           {" "}
@@ -82,7 +82,7 @@ export default function MenuScreen({ navigation }) {
       {/*REGISTRO TOMA DE TEMPERATURA DE EQUIPOS DE FR */}
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate("GestionResiduosCloro")}
+        onPress={() => navigation.navigate("")}
       >
         <Text style={styles.cardTitle}>
           ❄️ REGISTRO TOMA DE TEMPERATURA DE EQUIPOS DE FR

@@ -7,6 +7,7 @@ import { AuthProvider, AuthContext } from "./src/context/AuthContext";
 import LoginScreen from "./src/screens/LoginScreen";
 import MenuScreen from "./src/screens/MenuScreen";
 import GestionResiduosCloro from "./src/screens/GestionResiduosCloro";
+import LimpiezaDesinfeccionForm from "./src/screens/LimpiezaDesinfeccion";
 
 
 const Stack = createNativeStackNavigator();
@@ -16,6 +17,8 @@ function AppNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Menu" component={MenuScreen} />
       <Stack.Screen name="GestionResiduosCloro" component={GestionResiduosCloro} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="LimpiezaDesinfeccionForm" component={LimpiezaDesinfeccionForm} />
     </Stack.Navigator>
   );
 }
