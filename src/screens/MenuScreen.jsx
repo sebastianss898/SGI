@@ -46,7 +46,7 @@ export default function MenuScreen({ navigation }) {
       {/*REGISTRO INGRESO DE MATERIAS PRIMAS */}
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate("")}
+        onPress={() => navigation.navigate("MateriaPrimasForm")}
       >
         <Text style={styles.cardTitle}>
           {" "}
@@ -70,7 +70,7 @@ export default function MenuScreen({ navigation }) {
       {/*REGISTRO CONTROL MUESTRAS DE ALIMENTOS */}
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate("")}
+        onPress={() => navigation.navigate("MuestrasAlimentosForm")}
       >
         <Text style={styles.cardTitle}>
           {" "}
@@ -82,7 +82,7 @@ export default function MenuScreen({ navigation }) {
       {/*REGISTRO TOMA DE TEMPERATURA DE EQUIPOS DE FR */}
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate("")}
+        onPress={() => navigation.navigate("TemperaturaEquiposForm")}
       >
         <Text style={styles.cardTitle}>
           ❄️ REGISTRO TOMA DE TEMPERATURA DE EQUIPOS DE FR

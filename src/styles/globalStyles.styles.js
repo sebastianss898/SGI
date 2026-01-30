@@ -266,6 +266,102 @@ export default StyleSheet.create({
   backgroundColor: "#3498db", // Verde cuando está seleccionado
 },
 
+// Agregar al archivo de estilos:
+
+rowGroup: {
+  flexDirection: "row",
+  alignItems: "flex-start",
+},
+pickerContainer: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  marginBottom: 15,
+  marginTop: 5,
+},
+pickerButton: {
+  paddingVertical: 10,
+  paddingHorizontal: 15,
+  borderRadius: 20,
+  borderWidth: 1,
+  borderColor: "#3498db",
+  margin: 4,
+  backgroundColor: "#fff",
+},
+pickerButtonActive: {
+  backgroundColor: "#3498db",
+},
+pickerText: {
+  color: "#3498db",
+  fontSize: 14,
+  fontWeight: "600",
+},
+pickerTextActive: {
+  color: "#fff",
+},
+condicionRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  paddingVertical: 12,
+  borderBottomWidth: 1,
+  borderBottomColor: "#ecf0f1",
+},
+condicionLabel: {
+  fontSize: 15,
+  color: "#2c3e50",
+  fontWeight: "600",
+},
+condicionButtons: {
+  flexDirection: "row",
+},
+condicionButton: {
+  paddingVertical: 8,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+  minWidth: 80,
+  alignItems: "center",
+},
+condicionCumple: {
+  backgroundColor: "#27ae60",
+},
+condicionNoCumple: {
+  backgroundColor: "#e74c3c",
+},
+condicionButtonText: {
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: "bold",
+},
+registroRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginBottom: 8,
+},
+condicionesResumen: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  marginTop: 5,
+  marginBottom: 10,
+},
+condicionChip: {
+  paddingVertical: 6,
+  paddingHorizontal: 12,
+  borderRadius: 15,
+  marginRight: 8,
+  marginBottom: 5,
+  fontSize: 12,
+  fontWeight: "600",
+  color: "#fff",
+},
+chipCumple: {
+  backgroundColor: "#27ae60",
+},
+chipNoCumple: {
+  backgroundColor: "#e74c3c",
+},
+registroHeaderWarning: {
+  backgroundColor: "#e67e22",
+},
   /* puedes seguir moviendo TODO el StyleSheet aquí */
 });
 
