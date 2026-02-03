@@ -362,6 +362,24 @@ chipNoCumple: {
 registroHeaderWarning: {
   backgroundColor: "#e67e22",
 },
+
+textAreaLarge: {
+  height: 140,
+  paddingTop: 12,
+},
+registroTextProcedimiento: {
+  fontSize: 14,
+  color: "#2c3e50",
+  lineHeight: 20,
+  marginBottom: 12,
+  paddingLeft: 10,
+  fontStyle: "italic",
+  backgroundColor: "#f8f9fa",
+  padding: 10,
+  borderRadius: 6,
+  borderLeftWidth: 3,
+  borderLeftColor: "#3498db",
+},
   /* puedes seguir moviendo TODO el StyleSheet aquí */
 });
 

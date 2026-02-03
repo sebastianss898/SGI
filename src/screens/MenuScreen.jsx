@@ -58,7 +58,7 @@ export default function MenuScreen({ navigation }) {
       {/*Registro Control Químico de Plagas */}
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate("")}
+        onPress={() => navigation.navigate("ControlPlagasForm")}
       >
         <Text style={styles.cardTitle}>
           {" "}

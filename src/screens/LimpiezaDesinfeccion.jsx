@@ -14,6 +14,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import styles from "../styles/globalStyles.styles";
 
+import { db } from "../firebase/firebaseConfig";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
 const obtenerFechaActual = () => {
   const hoy = new Date();
   const dia = String(hoy.getDate()).padStart(2, "0");
@@ -60,6 +67,7 @@ const INITIAL_FORM_STATE = {
   observaciones: "",
 };
 
+
 const LimpiezaDesinfeccionForm = () => {
   const [mes, setMes] = useState(obtenerMesActual());
   const [anio, setAnio] = useState(obtenerAnioActual());
@@ -101,27 +109,50 @@ const LimpiezaDesinfeccionForm = () => {
     return true;
   };
 
-  const guardarRegistro = () => {
+  const limpiarFormulario = () => {
+    setForm({ ...INITIAL_FORM_STATE, fecha: obtenerFechaActual() });
+    setFechaDate(new Date());
+    setMostrarCalendario(false);
+  };
+
+  const guardarRegistro = async () => {
     try {
-      const areasLimpiadas = AREAS_LIMPIEZA.filter(
-        (area) => form[area.key],
-      ).map((a) => a.label);
+      setIsLoading(true);
+
+      const areasLimpiadas = AREAS_LIMPIEZA
+        .filter((area) => form[area.key])
+        .map((a) => a.label);
 
       const registro = {
-        ...form,
+        fecha: form.fecha,
+        mes,
+        anio,
         areasLimpiadas,
         totalAreas: areasLimpiadas.length,
+        firmaAuxiliar: form.firmaAuxiliar,
+        firmaSupervisor: form.firmaSupervisor,
+        observaciones: form.observaciones || "",
+        createdAt: serverTimestamp(),
       };
 
-      setRegistros([...registros, registro]);
-      Alert.alert("✓ Éxito", "Registro guardado correctamente");
-      setForm(INITIAL_FORM_STATE);
-      setFechaDate(new Date());
+      await addDoc(
+        collection(db, "limpiezaDesinfeccion", String(anio), mes),
+        registro
+      );
+
+      // Guardar localmente y limpiar formulario
+      setRegistros((prev) => [registro, ...prev]);
+      Alert.alert("✓ Éxito", "Registro guardado en Firebase");
+      limpiarFormulario();
     } catch (error) {
+      console.error("Error Firebase:", error);
       Alert.alert("Error", "No se pudo guardar el registro");
-      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+
 
   const guardar = () => {
     if (!validarFormulario()) return;
@@ -292,13 +323,35 @@ const LimpiezaDesinfeccionForm = () => {
               />
             </View>
 
-            <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
-              onPress={guardar}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>✓ Guardar Registro</Text>
-            </TouchableOpacity>
+            <View style={styles.rowGroup}>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.buttonPrimary,
+                  isLoading && styles.buttonDisabled,
+                  { flex: 1, marginRight: 8 },
+                ]}
+                onPress={guardar}
+                activeOpacity={0.8}
+                disabled={isLoading}
+              >
+                <Text
+                  style={
+                    isLoading ? [styles.buttonText, styles.buttonTextDisabled] : styles.buttonText
+                  }
+                >
+                  {isLoading ? "Guardando..." : "✓ Guardar Registro"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.button, styles.buttonSecondary, { flex: 1 }]}
+                onPress={limpiarFormulario}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.buttonText, styles.buttonTextSecondary]}>Limpiar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Tabla de registros */}
