@@ -14,6 +14,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import styles from "../styles/globalStyles.styles";
 
+import { db } from "../firebase/firebaseConfig";
+import {
+  collection,
+  addDoc,
+  doc,
+  runTransaction,
+  serverTimestamp,
+} from "firebase/firestore";
+
+
 const obtenerFechaActual = () => {
   const hoy = new Date();
   const dia = String(hoy.getDate()).padStart(2, "0");
@@ -42,9 +52,7 @@ const TIEMPOS_COMIDA = [
 ];
 
 const TIPOS_ENVASE = [
-  "Bolsa estéril",
   "Recipiente con tapa",
-  "Contenedor hermético",
   "Bolsa zip",
 ];
 
@@ -196,27 +204,63 @@ const MuestrasAlimentosForm = () => {
     return true;
   };
 
-  const guardarRegistro = () => {
-    try {
-      const registro = {
-        ...form,
-        temperaturaServicio: Number(form.temperaturaServicio),
-        temperaturaCumple: Number(form.temperaturaServicio) >= 60,
-      };
+  const guardarRegistro = async () => {
+  try {
+    setIsLoading(true);
 
-      setRegistros([...registros, registro]);
-      Alert.alert("✓ Éxito", "Registro guardado correctamente");
-      setForm(INITIAL_FORM_STATE);
-      setFechaDate(new Date());
-      setFechaEliminacionDate(new Date());
-      setHoraFinalizacionDate(new Date());
-      setHoraTomaMuestraDate(new Date());
-      setHoraEliminacionDate(new Date());
-    } catch (error) {
-      Alert.alert("Error", "No se pudo guardar el registro");
-      console.error(error);
-    }
-  };
+    const contadorRef = doc(db, "contadores", "muestras_alimentos");
+
+    const serial = await runTransaction(db, async (transaction) => {
+      const contadorDoc = await transaction.get(contadorRef);
+
+      let ultimo = 0;
+      if (contadorDoc.exists()) {
+        ultimo = contadorDoc.data().ultimo;
+      }
+
+      const nuevoSerial = ultimo + 1;
+
+      transaction.set(contadorRef, { ultimo: nuevoSerial }, { merge: true });
+
+      return nuevoSerial;
+    });
+
+    const registro = {
+      serial, // 👈 SERIAL CONSECUTIVO
+      ...form,
+      temperaturaServicio: Number(form.temperaturaServicio),
+      temperaturaCumple: Number(form.temperaturaServicio) >= 60,
+      mes,
+      anio,
+      createdAt: serverTimestamp(),
+    };
+
+    await addDoc(collection(db, "muestras_alimentos"), registro);
+
+    setRegistros([...registros, registro]);
+
+    Alert.alert(
+      "✓ Éxito",
+      `Registro guardado\nSerial Nº ${serial}`
+    );
+
+    setForm(INITIAL_FORM_STATE);
+
+    setFechaDate(new Date());
+    setFechaEliminacionDate(new Date());
+    setHoraFinalizacionDate(new Date());
+    setHoraTomaMuestraDate(new Date());
+    setHoraEliminacionDate(new Date());
+
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "No se pudo guardar el registro");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
   const guardar = () => {
     if (!validarFormulario()) return;
@@ -312,7 +356,7 @@ const MuestrasAlimentosForm = () => {
               • Temperatura mayor a 60°C para platos calientes
             </Text>
             <Text style={styles.infoText}>
-              • Muestra de 100-200g por preparación
+              • Muestra de 10-20g por preparación
             </Text>
             <Text style={styles.infoText}>
               • Conservar por 72 horas en refrigeración
@@ -416,7 +460,7 @@ const MuestrasAlimentosForm = () => {
             {/* Horas de Finalización y Toma de Muestra */}
             <View style={styles.rowGroup}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-                <Text style={styles.label}>Hora Finalización</Text>
+                <Text style={styles.label}>Hora de Preparación</Text>
                 <TouchableOpacity
                   onPress={() => setMostrarRelojFinalizacion(true)}
                   style={[styles.input, { justifyContent: "center" }]}
@@ -429,7 +473,7 @@ const MuestrasAlimentosForm = () => {
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Hora Toma Muestra</Text>
+                <Text style={styles.label}>Hora Toma De Muestra</Text>
                 <TouchableOpacity
                   onPress={() => setMostrarRelojTomaMuestra(true)}
                   style={[styles.input, { justifyContent: "center" }]}
@@ -483,7 +527,7 @@ const MuestrasAlimentosForm = () => {
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.label}>Tamaño Muestra</Text>
                 <TextInput
-                  placeholder="100-200g"
+                  placeholder="10-20g"
                   value={form.tamanoMuestra}
                   onChangeText={(value) =>
                     handleInputChange("tamanoMuestra", value)

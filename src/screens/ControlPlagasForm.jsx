@@ -1,4 +1,4 @@
-// TemperaturaEquiposForm.js
+// ControlPlagasForm.js
 import React, { useState } from "react";
 import {
   View,
@@ -41,30 +41,30 @@ const obtenerMesActual = () =>
   new Date().toLocaleString("es-CO", { month: "long" });
 const obtenerAnioActual = () => new Date().getFullYear();
 
-const TIPOS_EQUIPO = [
-  { key: "refrigerador", label: "Refrigerador", icon: "❄️" },
-  { key: "congelador", label: "Congelador", icon: "🧊" },
+// Productos comunes de control de plagas
+const PRODUCTOS_COMUNES = [
+  "Rodenticida",
+  "Insecticida",
+  "Gel para cucarachas",
+  "Cebo para roedores",
+  "Spray insecticida",
+  "Trampa adhesiva",
+  "Repelente",
+  "Otro",
 ];
-
-const TURNOS = ["AM", "PM"];
-
-// Rangos de temperatura según el documento
-const RANGOS_TEMPERATURA = {
-  refrigerador: { min: 0, max: 4, unidad: "°C" },
-  congelador: { min: -14, max: 0, unidad: "°C" },
-};
 
 const INITIAL_FORM_STATE = {
   fecha: obtenerFechaActual(),
   hora: obtenerHoraActual(),
-  tipoEquipo: "",
-  turno: "",
-  temperatura: "",
+  producto: "",
+  lote: "",
+  fechaVencimiento: "",
+  descripcionProcedimiento: "",
   responsable: "",
   observaciones: "",
 };
 
-const TemperaturaEquiposForm = () => {
+const ControlPlagasForm = () => {
   const [mes, setMes] = useState(obtenerMesActual());
   const [anio, setAnio] = useState(obtenerAnioActual());
   const [registros, setRegistros] = useState([]);
@@ -73,21 +73,15 @@ const TemperaturaEquiposForm = () => {
 
   // Estados para DateTimePicker
   const [fechaDate, setFechaDate] = useState(new Date());
+  const [fechaVencimientoDate, setFechaVencimientoDate] = useState(new Date());
   const [horaDate, setHoraDate] = useState(new Date());
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
+  const [mostrarCalendarioVencimiento, setMostrarCalendarioVencimiento] =
+    useState(false);
   const [mostrarReloj, setMostrarReloj] = useState(false);
 
-  // Estados para selectores
-  const [mostrarEquipos, setMostrarEquipos] = useState(false);
-
-  // Validar si un valor cumple con el rango permitido
-  const cumpleRango = (valor, tipo) => {
-    const num = Number(valor);
-    return (
-      num >= RANGOS_TEMPERATURA[tipo].min &&
-      num <= RANGOS_TEMPERATURA[tipo].max
-    );
-  };
+  // Estados para selector
+  const [mostrarProductos, setMostrarProductos] = useState(false);
 
   // Validación del formulario
   const validarFormulario = () => {
@@ -101,37 +95,40 @@ const TemperaturaEquiposForm = () => {
       return false;
     }
 
-    if (!form.tipoEquipo) {
-      Alert.alert("Error", "Debe seleccionar el tipo de equipo");
+    if (!form.producto.trim()) {
+      Alert.alert("Error", "El producto es obligatorio");
       return false;
     }
 
-    if (!form.turno) {
-      Alert.alert("Error", "Debe seleccionar el turno (AM/PM)");
+    if (!form.lote.trim()) {
+      Alert.alert("Error", "El lote es obligatorio");
       return false;
     }
 
-    if (!form.temperatura.trim() || isNaN(form.temperatura)) {
-      Alert.alert("Error", "La temperatura debe ser un número válido");
+    if (!form.fechaVencimiento.trim()) {
+      Alert.alert("Error", "La fecha de vencimiento es obligatoria");
       return false;
     }
 
-    const temp = Number(form.temperatura);
+    if (!form.descripcionProcedimiento.trim()) {
+      Alert.alert("Error", "La descripción del procedimiento es obligatoria");
+      return false;
+    }
 
     if (!form.responsable.trim()) {
       Alert.alert("Error", "El responsable es obligatorio");
       return false;
     }
 
-    // Advertencia si no cumple rangos
-    if (!cumpleRango(temp, form.tipoEquipo)) {
-      const rango = RANGOS_TEMPERATURA[form.tipoEquipo];
+    // Verificar si el producto está vencido
+    const hoy = new Date();
+    const [dia, mes, anio] = form.fechaVencimiento.split("/");
+    const fechaVenc = new Date(anio, mes - 1, dia);
+
+    if (fechaVenc < hoy) {
       Alert.alert(
         "⚠️ Advertencia",
-        `La temperatura está fuera del rango permitido para ${form.tipoEquipo}:\n` +
-          `Rango: ${rango.min}°C a ${rango.max}°C\n` +
-          `Temperatura registrada: ${temp}°C\n\n` +
-          `¿Desea continuar?`,
+        "El producto está vencido.\n¿Desea continuar de todas formas?",
         [
           { text: "Cancelar", style: "cancel" },
           { text: "Guardar igual", onPress: () => guardarRegistro() },
@@ -147,40 +144,34 @@ const TemperaturaEquiposForm = () => {
   try {
     setIsLoading(true);
 
-    const temp = Number(form.temperatura);
-    const temperaturaCumple = cumpleRango(temp, form.tipoEquipo);
-
     const registro = {
       fecha: form.fecha,
       hora: form.hora,
-      tipoEquipo: form.tipoEquipo,
-      turno: form.turno,
-      temperatura: temp,
-      temperaturaCumple,
+      producto: form.producto,
+      lote: form.lote,
+      fechaVencimiento: form.fechaVencimiento,
+      descripcionProcedimiento: form.descripcionProcedimiento,
       responsable: form.responsable,
       observaciones: form.observaciones || "",
-
       mes,
       anio,
       createdAt: serverTimestamp(),
     };
 
     // 🔥 Guardar en Firestore
-    await addDoc(
-      collection(db, "temperatura_equipos", String(anio), mes),
-      registro
-    );
+    await addDoc(collection(db, "controlPlagas"), registro);
 
-    // Mantener copia local para mostrar en pantalla
-    setRegistros((prev) => [registro, ...prev]);
+    // 🧠 Mantener UI local
+    setRegistros((prev) => [...prev, registro]);
 
-    Alert.alert("✓ Éxito", "Registro guardado en Firebase");
+    Alert.alert("✓ Éxito", "Registro guardado correctamente");
 
     setForm(INITIAL_FORM_STATE);
     setFechaDate(new Date());
+    setFechaVencimientoDate(new Date());
     setHoraDate(new Date());
   } catch (error) {
-    console.error("Error Firebase:", error);
+    console.error(error);
     Alert.alert("Error", "No se pudo guardar el registro");
   } finally {
     setIsLoading(false);
@@ -197,10 +188,6 @@ const TemperaturaEquiposForm = () => {
     setForm({ ...form, [campo]: value });
   };
 
-  const selectTurno = (turno) => {
-    setForm({ ...form, turno });
-  };
-
   // Manejador de cambio de fecha
   const onChangeFecha = (event, selectedDate) => {
     setMostrarCalendario(false);
@@ -210,6 +197,18 @@ const TemperaturaEquiposForm = () => {
       const mes = String(selectedDate.getMonth() + 1).padStart(2, "0");
       const anio = selectedDate.getFullYear();
       setForm({ ...form, fecha: `${dia}/${mes}/${anio}` });
+    }
+  };
+
+  // Manejador de cambio de fecha vencimiento
+  const onChangeFechaVencimiento = (event, selectedDate) => {
+    setMostrarCalendarioVencimiento(false);
+    if (selectedDate) {
+      setFechaVencimientoDate(selectedDate);
+      const dia = String(selectedDate.getDate()).padStart(2, "0");
+      const mes = String(selectedDate.getMonth() + 1).padStart(2, "0");
+      const anio = selectedDate.getFullYear();
+      setForm({ ...form, fechaVencimiento: `${dia}/${mes}/${anio}` });
     }
   };
 
@@ -223,26 +222,6 @@ const TemperaturaEquiposForm = () => {
       setForm({ ...form, hora: `${horas}:${minutos}` });
     }
   };
-
-  // Obtener estadísticas por tipo de equipo
-  const obtenerEstadisticas = () => {
-    const refrigeradores = registros.filter(
-      (r) => r.tipoEquipo === "refrigerador"
-    );
-    const congeladores = registros.filter(
-      (r) => r.tipoEquipo === "congelador"
-    );
-
-    return {
-      totalRefrigeradores: refrigeradores.length,
-      refrigeradoresOk: refrigeradores.filter((r) => r.temperaturaCumple)
-        .length,
-      totalCongeladores: congeladores.length,
-      congeladoresOk: congeladores.filter((r) => r.temperaturaCumple).length,
-    };
-  };
-
-  const stats = obtenerEstadisticas();
 
   return (
     <KeyboardAvoidingView
@@ -259,28 +238,25 @@ const TemperaturaEquiposForm = () => {
           <View style={styles.officialHeader}>
             <Text style={styles.companyName}>🏢 ÚRSULA CAFÉ</Text>
             <Text style={styles.documentTitle}>
-              REGISTRO TOMA DE TEMPERATURA DE EQUIPOS DE FRÍO
+              REGISTRO CONTROL QUÍMICO DE PLAGAS
             </Text>
-            <Text style={styles.version}>Versión: 01 | Fecha: Julio 2025</Text>
+            <Text style={styles.version}>Versión: 02 | Fecha: Junio 2025</Text>
           </View>
 
-          {/* Información normativa */}
+          {/* Información */}
           <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>📋 Rangos Permitidos</Text>
+            <Text style={styles.infoTitle}>📋 Procedimiento</Text>
             <Text style={styles.infoText}>
-              ❄️ Refrigeración: 0°C a 4°C
+              Se realizará de acuerdo con el plan de control de plagas
             </Text>
             <Text style={styles.infoText}>
-              🧊 Congelación: -14°C a 0°C
-            </Text>
-            <Text style={[styles.infoTitle, { marginTop: 10 }]}>
-              📊 Instrucciones
+              • Registre cada aplicación de productos
             </Text>
             <Text style={styles.infoText}>
-              • Tomar temperatura 2 veces al día (AM/PM)
+              • Verifique la fecha de vencimiento
             </Text>
             <Text style={styles.infoText}>
-              • Verificar el correcto funcionamiento
+              • Incluya descripción detallada del procedimiento
             </Text>
           </View>
 
@@ -294,29 +270,6 @@ const TemperaturaEquiposForm = () => {
               {registros.length} registro{registros.length !== 1 ? "s" : ""}
             </Text>
           </View>
-
-          {/* Estadísticas */}
-          {registros.length > 0 && (
-            <View style={styles.statsContainer}>
-              <View style={styles.statCard}>
-                <Text style={styles.statIcon}>❄️</Text>
-                <Text style={styles.statTitle}>Refrigeradores</Text>
-                <Text style={styles.statValue}>
-                  {stats.refrigeradoresOk}/{stats.totalRefrigeradores}
-                </Text>
-                <Text style={styles.statLabel}>Dentro del rango</Text>
-              </View>
-
-              <View style={styles.statCard}>
-                <Text style={styles.statIcon}>🧊</Text>
-                <Text style={styles.statTitle}>Congeladores</Text>
-                <Text style={styles.statValue}>
-                  {stats.congeladoresOk}/{stats.totalCongeladores}
-                </Text>
-                <Text style={styles.statLabel}>Dentro del rango</Text>
-              </View>
-            </View>
-          )}
 
           {/* Formulario de entrada */}
           <View style={styles.formContainer}>
@@ -374,109 +327,113 @@ const TemperaturaEquiposForm = () => {
               />
             )}
 
-            {/* Tipo de Equipo */}
+            {/* Producto */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Tipo de Equipo</Text>
+              <Text style={styles.label}>Producto</Text>
               <TouchableOpacity
-                onPress={() => setMostrarEquipos(!mostrarEquipos)}
+                onPress={() => setMostrarProductos(!mostrarProductos)}
                 style={[styles.input, { justifyContent: "center" }]}
                 activeOpacity={0.7}
               >
                 <Text style={{ color: "#2c3e50", fontSize: 16 }}>
-                  {form.tipoEquipo
-                    ? `${
-                        TIPOS_EQUIPO.find((e) => e.key === form.tipoEquipo)
-                          ?.icon
-                      } ${
-                        TIPOS_EQUIPO.find((e) => e.key === form.tipoEquipo)
-                          ?.label
-                      }`
-                    : "Seleccionar"}
+                  {form.producto || "Seleccionar o escribir"}
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {mostrarEquipos && (
+            {mostrarProductos && (
               <View style={styles.pickerContainer}>
-                {TIPOS_EQUIPO.map((equipo) => (
+                {PRODUCTOS_COMUNES.map((producto, index) => (
                   <TouchableOpacity
-                    key={equipo.key}
+                    key={index}
                     style={[
                       styles.pickerButton,
-                      form.tipoEquipo === equipo.key &&
-                        styles.pickerButtonActive,
+                      form.producto === producto && styles.pickerButtonActive,
                     ]}
                     onPress={() => {
-                      handleInputChange("tipoEquipo", equipo.key);
-                      setMostrarEquipos(false);
+                      handleInputChange("producto", producto);
+                      setMostrarProductos(false);
                     }}
                   >
                     <Text
                       style={[
                         styles.pickerText,
-                        form.tipoEquipo === equipo.key &&
-                          styles.pickerTextActive,
+                        form.producto === producto && styles.pickerTextActive,
                       ]}
                     >
-                      {equipo.icon} {equipo.label}
+                      {producto}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             )}
 
-            {/* Mostrar rango esperado según tipo de equipo */}
-            {form.tipoEquipo && (
-              <View style={styles.rangoInfo}>
-                <Text style={styles.rangoInfoText}>
-                  📊 Rango esperado:{" "}
-                  {RANGOS_TEMPERATURA[form.tipoEquipo].min}°C a{" "}
-                  {RANGOS_TEMPERATURA[form.tipoEquipo].max}°C
-                </Text>
+            {/* Campo manual si selecciona "Otro" */}
+            {form.producto === "Otro" && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Especificar Producto</Text>
+                <TextInput
+                  placeholder="Nombre del producto"
+                  onChangeText={(value) => handleInputChange("producto", value)}
+                  style={styles.input}
+                  placeholderTextColor="#95a5a6"
+                />
               </View>
             )}
 
-          // Reemplaza la sección del Turno en el formulario:
+            {/* Lote y Fecha de Vencimiento */}
+            <View style={styles.rowGroup}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+                <Text style={styles.label}>Lote</Text>
+                <TextInput
+                  placeholder="Nº de lote"
+                  value={form.lote}
+                  onChangeText={(value) => handleInputChange("lote", value)}
+                  style={styles.input}
+                  placeholderTextColor="#95a5a6"
+                />
+              </View>
 
-{/* Turno */}
-<View style={styles.inputGroup}>
-  <Text style={styles.label}>Turno</Text>
-  <View style={styles.turnoContainer}>
-    {TURNOS.map((turno) => (
-      <TouchableOpacity
-        key={turno}
-        style={[
-          styles.turnoButton,
-          form.turno === turno && styles.turnoButtonActive,
-        ]}
-        onPress={() => selectTurno(turno)}
-        activeOpacity={0.7}
-      >
-        <Text
-          style={[
-            styles.turnoText,
-            form.turno === turno && styles.turnoTextActive,
-          ]}
-        >
-          {turno}
-        </Text>
-      </TouchableOpacity>
-    ))}
-  </View>
-</View>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={styles.label}>Fecha Vencimiento</Text>
+                <TouchableOpacity
+                  onPress={() => setMostrarCalendarioVencimiento(true)}
+                  style={[styles.input, { justifyContent: "center" }]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ color: "#2c3e50", fontSize: 14 }}>
+                    📅 {form.fechaVencimiento || "Fecha"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
-            {/* Temperatura */}
+            {/* DateTimePicker para fecha vencimiento */}
+            {mostrarCalendarioVencimiento && (
+              <DateTimePicker
+                value={fechaVencimientoDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                onChange={onChangeFechaVencimiento}
+                locale="es-CO"
+                minimumDate={new Date()}
+              />
+            )}
+
+            {/* Descripción del Procedimiento */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Temperatura (°C)</Text>
+              <Text style={styles.label}>Descripción del Procedimiento</Text>
               <TextInput
-                placeholder="Ej: 2 o -10"
-                value={form.temperatura}
+                placeholder="Detalle el procedimiento realizado: áreas tratadas, método aplicado, precauciones, etc."
+                value={form.descripcionProcedimiento}
                 onChangeText={(value) =>
-                  handleInputChange("temperatura", value)
+                  handleInputChange("descripcionProcedimiento", value)
                 }
-                keyboardType="numeric"
-                style={styles.input}
+                style={[styles.input, styles.textAreaLarge]}
                 placeholderTextColor="#95a5a6"
+                multiline
+                numberOfLines={6}
+                textAlignVertical="top"
               />
             </View>
 
@@ -484,7 +441,7 @@ const TemperaturaEquiposForm = () => {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Responsable</Text>
               <TextInput
-                placeholder="Nombre del responsable"
+                placeholder="Nombre del responsable de la aplicación"
                 value={form.responsable}
                 onChangeText={(value) =>
                   handleInputChange("responsable", value)
@@ -496,7 +453,7 @@ const TemperaturaEquiposForm = () => {
 
             {/* Observaciones */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Observaciones</Text>
+              <Text style={styles.label}>Observaciones Adicionales</Text>
               <TextInput
                 placeholder="Comentarios adicionales (opcional)"
                 value={form.observaciones}
@@ -530,14 +487,15 @@ const TemperaturaEquiposForm = () => {
                   <View
                     style={[
                       styles.registroHeader,
-                      !reg.temperaturaCumple && styles.registroHeaderWarning,
+                      reg.estaVencido && styles.registroHeaderWarning,
                     ]}
                   >
                     <Text style={styles.registroFecha}>
-                      {TIPOS_EQUIPO.find((e) => e.key === reg.tipoEquipo)?.icon}{" "}
-                      {TIPOS_EQUIPO.find((e) => e.key === reg.tipoEquipo)?.label}
+                      🐜 {reg.producto}
                     </Text>
-                    <Text style={styles.registroAreas}>{reg.turno}</Text>
+                    <Text style={styles.registroAreas}>
+                      {reg.estaVencido ? "⚠️ Vencido" : "✓ Vigente"}
+                    </Text>
                   </View>
 
                   <View style={styles.registroBody}>
@@ -549,27 +507,27 @@ const TemperaturaEquiposForm = () => {
                     </View>
 
                     <View style={styles.registroRow}>
-                      <Text style={styles.registroLabel}>Temperatura:</Text>
-                      <Text
-                        style={[
-                          styles.registroTextBig,
-                          reg.temperaturaCumple
-                            ? styles.textCumple
-                            : styles.textNoCumple,
-                        ]}
-                      >
-                        {reg.temperatura}°C{" "}
-                        {reg.temperaturaCumple ? "✓" : "✗"}
-                      </Text>
+                      <Text style={styles.registroLabel}>Lote:</Text>
+                      <Text style={styles.registroText}>{reg.lote}</Text>
                     </View>
 
                     <View style={styles.registroRow}>
-                      <Text style={styles.registroLabel}>Rango esperado:</Text>
-                      <Text style={styles.registroTextSmall}>
-                        {RANGOS_TEMPERATURA[reg.tipoEquipo].min}°C a{" "}
-                        {RANGOS_TEMPERATURA[reg.tipoEquipo].max}°C
+                      <Text style={styles.registroLabel}>Vencimiento:</Text>
+                      <Text
+                        style={[
+                          styles.registroText,
+                          reg.estaVencido && styles.textNoCumple,
+                        ]}
+                      >
+                        {reg.fechaVencimiento}
+                        {reg.estaVencido ? " ⚠️" : " ✓"}
                       </Text>
                     </View>
+
+                    <Text style={styles.registroLabel}>Procedimiento:</Text>
+                    <Text style={styles.registroTextProcedimiento}>
+                      {reg.descripcionProcedimiento}
+                    </Text>
 
                     <View style={styles.registroRow}>
                       <Text style={styles.registroLabel}>Responsable:</Text>
@@ -595,4 +553,4 @@ const TemperaturaEquiposForm = () => {
   );
 };
 
-export default TemperaturaEquiposForm;
+export default ControlPlagasForm;

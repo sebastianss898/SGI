@@ -21,6 +21,9 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
+
+
+
 const obtenerFechaActual = () => {
   const hoy = new Date();
   const dia = String(hoy.getDate()).padStart(2, "0");

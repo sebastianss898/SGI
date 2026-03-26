@@ -4,7 +4,7 @@ import * as FileSystem from "expo-file-system";
 export async function generarPDF(mes, anio, registros) {
   const filas = registros.map(r => `
     <tr>
-      <td>${r.dia}</td>
+      <td>${r.fecha ?? r.dia}</td>
       <td>${r.hora}</td>
       <td>${r.lugar}</td>
       <td>${r.cloro}</td>

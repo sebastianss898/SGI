@@ -14,6 +14,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import styles from "../styles/globalStyles.styles";
 
+import { db } from "../firebase/firebaseConfig";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
+
 const obtenerFechaActual = () => {
   const hoy = new Date();
   const dia = String(hoy.getDate()).padStart(2, "0");
@@ -130,28 +138,63 @@ const MateriaPrimasForm = () => {
     return true;
   };
 
-  const guardarRegistro = () => {
-    try {
-      const todasCumplen =
-        form.colorCumple && form.olorCumple && form.saborCumple;
+  const guardarRegistro = async () => {
+  try {
+    setIsLoading(true);
 
-      const registro = {
-        ...form,
-        cumpleGeneral: todasCumplen,
-        cantidad: Number(form.cantidad),
-        temperatura: form.temperatura ? Number(form.temperatura) : null,
-      };
+    const todasCumplen =
+      form.colorCumple && form.olorCumple && form.saborCumple;
 
-      setRegistros([...registros, registro]);
-      Alert.alert("✓ Éxito", "Registro guardado correctamente");
-      setForm(INITIAL_FORM_STATE);
-      setFechaDate(new Date());
-      setFechaVencimientoDate(new Date());
-    } catch (error) {
-      Alert.alert("Error", "No se pudo guardar el registro");
-      console.error(error);
-    }
-  };
+    const registro = {
+      fecha: form.fecha,
+      mes,
+      anio,
+
+      producto: form.producto,
+      cantidad: Number(form.cantidad),
+      unidadMedida: form.unidadMedida,
+      temperatura: form.temperatura ? Number(form.temperatura) : null,
+      proveedor: form.proveedor,
+      fechaVencimiento: form.fechaVencimiento,
+      lote: form.lote || "",
+
+      condicionesOrganolepticas: {
+        colorCumple: form.colorCumple,
+        olorCumple: form.olorCumple,
+        saborCumple: form.saborCumple,
+      },
+
+      // Propiedades al nivel superior para compatibilidad con la vista
+      colorCumple: form.colorCumple,
+      olorCumple: form.olorCumple,
+      saborCumple: form.saborCumple,
+
+      cumpleGeneral: todasCumplen,
+      responsable: form.responsable,
+      observaciones: form.observaciones || "",
+
+      createdAt: serverTimestamp(),
+    };
+
+    await addDoc(
+      collection(db, "materiasPrimas", String(anio), mes),
+      registro
+    );
+
+    setRegistros((prev) => [registro, ...prev]);
+    Alert.alert("✓ Éxito", "Registro guardado en Firebase");
+
+    setForm(INITIAL_FORM_STATE);
+    setFechaDate(new Date());
+    setFechaVencimientoDate(new Date());
+  } catch (error) {
+    console.error("Error Firebase:", error);
+    Alert.alert("Error", "No se pudo guardar el registro");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const guardar = () => {
     if (!validarFormulario()) return;
@@ -532,32 +575,32 @@ const MateriaPrimasForm = () => {
                       <Text
                         style={[
                           styles.condicionChip,
-                          reg.colorCumple
+                          (reg.colorCumple ?? reg.condicionesOrganolepticas?.colorCumple)
                             ? styles.chipCumple
                             : styles.chipNoCumple,
                         ]}
                       >
-                        Color: {reg.colorCumple ? "C ✓" : "NC ✗"}
+                        Color: {(reg.colorCumple ?? reg.condicionesOrganolepticas?.colorCumple) ? "C ✓" : "NC ✗"}
                       </Text>
                       <Text
                         style={[
                           styles.condicionChip,
-                          reg.olorCumple
+                          (reg.olorCumple ?? reg.condicionesOrganolepticas?.olorCumple)
                             ? styles.chipCumple
                             : styles.chipNoCumple,
                         ]}
                       >
-                        Olor: {reg.olorCumple ? "C ✓" : "NC ✗"}
+                        Olor: {(reg.olorCumple ?? reg.condicionesOrganolepticas?.olorCumple) ? "C ✓" : "NC ✗"}
                       </Text>
                       <Text
                         style={[
                           styles.condicionChip,
-                          reg.saborCumple
+                          (reg.saborCumple ?? reg.condicionesOrganolepticas?.saborCumple)
                             ? styles.chipCumple
                             : styles.chipNoCumple,
                         ]}
                       >
-                        Sabor: {reg.saborCumple ? "C ✓" : "NC ✗"}
+                        Sabor: {(reg.saborCumple ?? reg.condicionesOrganolepticas?.saborCumple) ? "C ✓" : "NC ✗"}
                       </Text>
                     </View>
 

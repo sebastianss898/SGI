@@ -169,26 +169,59 @@ const GestionResiduosCloro = () => {
     return true;
   };
 
-  const guardarRegistro = () => {
-    try {
-      const registro = crearRegistro({
-        ...form,
-        cloro: Number(form.cloro),
-        ph: Number(form.ph),
-        cloroCumple: cumpleRango(form.cloro, "cloro"),
-        phCumple: cumpleRango(form.ph, "ph"),
-      });
+  const guardarRegistro = async () => {
+  try {
+    setIsLoading(true);
 
-      setRegistros([...registros, registro]);
-      Alert.alert("✓ Éxito", "Registro guardado correctamente");
-      setForm(INITIAL_FORM_STATE);
-      setFechaDate(new Date());
-      setHoraDate(new Date());
-    } catch (error) {
-      Alert.alert("Error", "No se pudo guardar el registro");
-      console.error(error);
-    }
-  };
+    const registro = {
+      fecha: form.fecha,
+      hora: form.hora,
+      lugar: form.lugar,
+      responsable: form.responsable,
+
+      cloro: Number(form.cloro),
+      cloroCumple: cumpleRango(form.cloro, "cloro"),
+      cumpleCloro: cumpleRango(form.cloro, "cloro"),
+      cloroRango: {
+        min: RANGOS.cloro.min,
+        max: RANGOS.cloro.max,
+        unidad: RANGOS.cloro.unidad,
+      },
+
+      ph: Number(form.ph),
+      phCumple: cumpleRango(form.ph, "ph"),
+      cumplePh: cumpleRango(form.ph, "ph"),
+      phRango: {
+        min: RANGOS.ph.min,
+        max: RANGOS.ph.max,
+        unidad: RANGOS.ph.unidad,
+      },
+
+      mes,
+      anio,
+      createdAt: new Date(),
+    };
+
+    // 🔥 Guardar en Firestore
+    await guardarRegistroFirestore(mes, anio, registro);
+
+    // 🧾 Guardar para tabla local
+    setRegistros((prev) => [...prev, registro]);
+
+    Alert.alert("✓ Éxito", "Registro guardado con rangos y validación");
+
+    setForm(INITIAL_FORM_STATE);
+    setFechaDate(new Date());
+    setHoraDate(new Date());
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "No se pudo guardar en Firebase");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
   const guardar = () => {
     if (!validarFormulario()) return;
@@ -466,31 +499,5 @@ const GestionResiduosCloro = () => {
     </KeyboardAvoidingView>
   );
 };
-const guardarRegistro = async () => {
-  try {
-    const registro = {
-      ...form,
-      cloro: Number(form.cloro),
-      ph: Number(form.ph),
-      cloroCumple: cumpleRango(form.cloro, "cloro"),
-      phCumple: cumpleRango(form.ph, "ph"),
-    };
-
-    // Guardar en Firestore
-    await guardarRegistroFirestore(mes, anio, registro);
-
-    // Guardar local (tabla)
-    setRegistros((prev) => [...prev, registro]);
-
-    Alert.alert("✓ Éxito", "Registro guardado en Firebase");
-    setForm(INITIAL_FORM_STATE);
-    setFechaDate(new Date());
-    setHoraDate(new Date());
-  } catch (error) {
-    Alert.alert("Error", "No se pudo guardar en Firebase");
-    console.error(error);
-  }
-};
-
 
 export default GestionResiduosCloro;

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "water-control-app",
-    "slug": "water-control-app",
-    "version": "1.0.0",
+    "name": "Gestion PSB",
+    "slug": "Gestion-PSB-app",
+    "version": "beta-1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,10 +20,16 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.bedoya123.GestionPSBapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0c026a4a-8e51-4f79-8248-68033bc9214a"
+      }
     }
   }
 }
